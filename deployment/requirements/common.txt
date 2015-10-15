@@ -1,0 +1,4 @@
+Django==1.8.5
+smartconfigparser==0.1.1
+Jinja2==2.8
+django-cors-headers==1.1.0

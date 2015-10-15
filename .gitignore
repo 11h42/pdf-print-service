@@ -55,3 +55,6 @@ docs/_build/
 
 # PyBuilder
 target/
+
+.idea
+/pdf_print_service/db.sqlite3
