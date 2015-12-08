@@ -19,6 +19,7 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.utils import six
 
+import subprocess
 from subprocess import check_output
 
 
@@ -109,7 +110,7 @@ def wkhtmltopdf(pages, output=None, **kwargs):
     ck_kwargs = {'env': env}
     try:
         i = sys.stderr.fileno()
-        ck_kwargs['stderr'] = sys.stderr
+        ck_kwargs['stderr'] = subprocess.STDOUT
     except AttributeError:
         # can't call fileno() on mod_wsgi stderr object
         pass

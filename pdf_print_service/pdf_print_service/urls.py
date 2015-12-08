@@ -19,5 +19,5 @@ from pdf.views import MakePDFViewFromHtml
 
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^pdf/$', MakePDFViewFromHtml.as_view(), name='pdf'),
+    url(r'^pdf/?$', MakePDFViewFromHtml.as_view(), name='pdf'),
 ]

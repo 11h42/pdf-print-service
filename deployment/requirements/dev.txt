@@ -1,4 +1,4 @@
 -r common.txt
-#factory-boy==2.4.1
+factory-boy
 django-jenkins
 coverage==3.7.1

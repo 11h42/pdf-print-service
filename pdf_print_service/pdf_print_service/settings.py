@@ -14,7 +14,9 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 import os
 import sys
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Base dir is parent folder of project
+PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(PROJECT_DIR)
 LOG_DIR = os.path.join(BASE_DIR, 'log')
 
 os.makedirs(LOG_DIR, exist_ok=True)
@@ -29,7 +31,7 @@ SECRET_KEY = '7c=c0$m)l2%-6z*gf!64%l7sdel3^_kxs))n+puo#c(i)+0mz%'
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
+# APPEND_SLASH = False
 
 # Application definition
 
@@ -107,6 +109,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, "www", "static")
 
 LOGGING = {
     'version': 1,
@@ -168,10 +171,11 @@ WKHTMLTOPDF_CMD_OPTIONS = {
     'quiet': None,
 }
 
-CORS_ORIGIN_ALLOW_ALL = False
+CORS_ORIGIN_ALLOW_ALL = True
 CORS_ORIGIN_WHITELIST = (
     '127.0.0.1',
     '127.0.0.1:8000',
+    'akema.fr',
 )
 CORS_ORIGIN_REGEX_WHITELIST = ('^(https?://)?(.+\.)?akema\.fr$', )
 CORS_URLS_REGEX = r'^/pdf/.*$'

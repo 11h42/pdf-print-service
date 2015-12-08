@@ -58,3 +58,5 @@ target/
 
 .idea
 /pdf_print_service/db.sqlite3
+www
+db.sqlite3

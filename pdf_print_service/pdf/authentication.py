@@ -1,4 +1,6 @@
 import base64
+import logging
+
 from django.contrib.auth import authenticate
 from django.http import HttpResponse
 from django.utils.six import wraps
@@ -17,7 +19,7 @@ def basic_auth_required(view_func):
             return view_func(request, *args, **kwargs)
 
         basic_auth = request.META.get('HTTP_AUTHORIZATION')
-        print(basic_auth)
+        # print(basic_auth)
 
         if basic_auth:
             auth_method, token = basic_auth.split(' ', 1)
@@ -31,6 +33,7 @@ def basic_auth_required(view_func):
             if user.is_active:
                 request.user = user
                 return view_func(request, *args, **kwargs)
+        logging.getLogger("auth").warning("Bad password for user '%s'", username)
         return HttpResponse(status=401)
 
     return _wrapped_view

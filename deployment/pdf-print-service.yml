@@ -1,0 +1,84 @@
+---
+- name: pdf-print-service
+  hosts: all
+  remote_user: root
+  sudo: yes
+
+  vars:
+    app_name: pdf-print-service
+    app_user: "pdf"
+    app_fqdn: "pdf-print-service.akema.fr"
+    app_dir: "/usr/local/{{app_name}}"
+    log_dir: "{{app_dir}}/log"
+    frontend_dir: "{{app_dir}}/frontend/"
+
+    python_virtualenv_dir: "{{app_dir}}/.env"
+    python3_enabled: true # set to false to install python 2.7
+    django_settings_file: # CHANGE ME
+
+#    git_remote_url: {{ PROJECT_URL }}  # CHANGE ME
+#    git_branch: master
+
+    uwsgi_config_dir: "{{app_dir}}/uwsgi"
+    uwsgi_socket_path: "/tmp/{{app_name}}.uwsgi.sock"
+
+    nginx_disable_unmanaged: false
+    nginx_site_availables:
+      app: # CHANGE ME put the name of your application (app: become awesome_app: )
+        - "listen      80"
+        - "server_name {{app_fqdn}}"
+        - "charset     utf-8"
+        - "access_log  /var/log/nginx/{{app_name}}.access.log"
+        - "error_log  /var/log/nginx/{{app_name}}.error.log"
+        - "location ~ /(static|media)/ {root {{app_dir}}/www;}"
+        - "location / {include uwsgi_params;uwsgi_pass unix:{{uwsgi_socket_path}};}"
+
+    uwsgi_configs:
+      pdf_print_service: # CHANGE ME put the name of your application  (app: become awesome_app: )
+        - "[uwsgi]"
+        - "chdir = {{app_dir}}/pdf_print_service"
+        - "env = {{python_virtualenv_dir}}"
+        - "pythonpath = %(chdir)"
+        - "processes = 1"
+        - "module = pdf_print_service.wsgi" # CHANGE ME put the name of your settings.py dir  (app.wsgi become awesome_app.wsgi )
+        - "uid = {{app_user}}"
+        - "gid = {{app_user}}"
+        - "socket = {{uwsgi_socket_path}}"
+        - "chmod-socket = 666"
+        - "logto = {{log_dir}}/uwsgi.{{app_name}}.log"
+
+    supervisor_process:
+      pdf_print_service:
+        - "[program:{{app_name}}]" # put program:application_name  (program:app become program:appawesome_app )
+        - "command={{python_virtualenv_dir}}/bin/uwsgi --ini {{uwsgi_config_dir}}/pdf_print_service.ini"
+        - "numprocs=1"
+        - "process_name={{app_name}}"
+        - "stdout_logfile={{log_dir}}/{{app_name}}.supervisor.log"
+        - "loglevel=debug"
+        - "redirect_stderr=true"
+        - "autostart=true"
+        - "autorestart=true"
+        - "user={{app_user}}"
+
+
+  roles: # remove role you dont need
+    - user
+    - nginx
+#    - postgresql
+#    - archivist
+#    - nodejs
+#    - bower
+#    - gulp
+    - python-virtualenv
+#    - django
+#    - mongodb
+    # should be done before starting supervisord
+    - app-init
+    - uwsgi
+    - supervisor
+#    - logging
+
+
+  tasks:
+    - name: change application folder permission
+      file: recurse=yes owner={{ app_user }} group={{ app_user }} path={{ app_dir }}

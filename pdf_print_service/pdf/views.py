@@ -2,8 +2,9 @@ import json
 import logging
 import tempfile
 
+import subprocess
 from django.conf import settings
-from django.http import HttpResponseForbidden
+from django.http import HttpRequest, HttpResponseForbidden, HttpResponseServerError
 from django.utils.decorators import method_decorator
 from django.utils.encoding import smart_text
 from django.views.decorators.csrf import csrf_exempt
@@ -65,6 +66,7 @@ class MakePDFViewFromHtml(View):
         return wkhtmltopdf(pages=[filename_or_url], **cmd_options)
 
     def post(self, request, *args, **kwargs):
+        assert(isinstance(request, HttpRequest))
         if not request.user.is_authenticated():
             log.warn("Unauthenticated user can't use PDF API")
             return HttpResponseForbidden()
@@ -72,17 +74,26 @@ class MakePDFViewFromHtml(View):
         debug = getattr(settings, 'WKHTMLTOPDF_DEBUG', settings.DEBUG)
 
         params = json.loads(request.body.decode('utf-8'))
+        log.info("%s %s (%s)", request.method, request.path, params)
         if 'url' in params:
             # content is from remote URL
             remote_url = params['url']
 
-            pdf_content = self.convert_to_pdf(
-                filename_or_url=remote_url,
-                cmd_options={
-                    'print-media-type': params.get('print-media-type', True),
-                    'cookie': params.get('cookies', None),#(('sessionid', request.COOKIES.get('sessionid')),)
-                })
-            return PDFResponse(pdf_content)
+            try:
+                pdf_content = self.convert_to_pdf(
+                    filename_or_url=remote_url,
+                    cmd_options={
+                        'print-media-type': params.get('print-media-type', True),
+                        'cookie': params.get('cookies', None),#(('sessionid', request.COOKIES.get('sessionid')),)
+                    })
+                return PDFResponse(pdf_content)
+            except subprocess.CalledProcessError as ex:
+                log.error("Error running wkhtmltopdf: %s", ex)
+                log.error("wkhtmltopdf output was: %s", ex.output.decode('utf-8'))
+                output = ex.output.decode('utf-8')  #.strip().splitlines()[-1]
+                if 'ConnectionRefusedError' in output:
+                    return HttpResponseServerError("PDF service can't connect to '%s'" % remote_url)
+                return HttpResponseServerError("WKHTMLTOPDF error: %s" % output)
 
         else:
             content = self.render_jinja2(params)
@@ -115,4 +126,5 @@ class MakePDFViewFromHtml(View):
     @method_decorator(csrf_exempt)
     @method_decorator(basic_auth_required)
     def dispatch(self, request, *args, **kwargs):
+        print("DISPATCH")
         return super(MakePDFViewFromHtml, self).dispatch(request, *args, **kwargs)

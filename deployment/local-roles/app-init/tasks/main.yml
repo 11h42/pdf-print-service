@@ -1,0 +1,14 @@
+---
+- name: create log folder
+  file: state=directory recurse=yes owner={{ app_user }} group={{ app_user }} path={{ log_dir }}
+  tags: [log]
+
+- name: download wkhtmltopdf
+  get_url: url=http://download.gna.org/wkhtmltopdf/0.12/0.12.2.1/wkhtmltox-0.12.2.1_linux-trusty-amd64.deb \
+           dest={{ app_dir }}/wkhtmltox.deb mode=0440
+  tags: [wkhtmltopdf]
+
+- name: install wkhtmltopdf
+  apt: deb={{ app_dir }}/wkhtmltox.deb
+  tags: [wkhtmltopdf]
+

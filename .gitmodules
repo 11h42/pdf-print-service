@@ -1,0 +1,6 @@
+[submodule "deployment/roles"]
+	path = deployment/roles
+	url = git@github.com:11h42/ansible-roles.git
+[submodule "deployment/fabric_common"]
+	path = deployment/fabric_common
+	url = git@github.com:11h42/fabric_common.git
