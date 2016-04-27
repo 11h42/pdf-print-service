@@ -78,6 +78,7 @@ class MakePDFViewFromHtml(View):
         if 'url' in params:
             # content is from remote URL
             remote_url = params['url']
+            pdf_filename = params.get('filename', 'document.pdf')
 
             try:
                 pdf_content = self.convert_to_pdf(
@@ -86,7 +87,7 @@ class MakePDFViewFromHtml(View):
                         'print-media-type': params.get('print-media-type', True),
                         'cookie': params.get('cookies', None),#(('sessionid', request.COOKIES.get('sessionid')),)
                     })
-                return PDFResponse(pdf_content)
+                return PDFResponse(pdf_content, filename=pdf_filename)
             except subprocess.CalledProcessError as ex:
                 log.error("Error running wkhtmltopdf: %s", ex)
                 log.error("wkhtmltopdf output was: %s", ex.output.decode('utf-8'))
