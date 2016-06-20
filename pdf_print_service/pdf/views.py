@@ -3,6 +3,8 @@ import logging
 import tempfile
 
 import subprocess
+
+import sys
 from django.conf import settings
 from django.http import HttpRequest, HttpResponseForbidden, HttpResponseServerError, HttpResponseNotFound
 from django.utils.decorators import method_decorator
@@ -90,9 +92,15 @@ class MakePDFViewFromHtml(View):
                 return PDFResponse(pdf_content, filename=pdf_filename)
             except subprocess.CalledProcessError as ex:
                 log.error("Error running wkhtmltopdf: %s", ex)
-                # print(ex.stderr)
-                log.error("wkhtmltopdf output was: %s", ex.stderr.decode('utf-8', errors='replace'))
-                output = ex.stderr.decode('utf-8')  #.strip().splitlines()[-1]
+                if sys.version_info >= (3, 5):
+                    # if hasattr(ex, 'stderr'):
+                    # Python 3.5 and up
+                    # print(ex.stderr)
+                    output = ex.stderr.decode('utf-8', errors='replace')  #.strip().splitlines()[-1]
+                else:
+                    output = ex.output.decode('utf-8', errors='replace')  #.strip().splitlines()[-1]
+
+                log.error("wkhtmltopdf output was: %s", output)
                 if 'ConnectionRefusedError' in output:
                     return HttpResponseServerError("PDF service can't connect to '%s'" % remote_url)
                 if 'ContentNotFoundError' in output:
