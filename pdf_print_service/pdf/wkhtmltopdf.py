@@ -108,7 +108,10 @@ def wkhtmltopdf(pages, output=None, **kwargs):
                          _options_to_args(**options),
                          list(pages),
                          [output]))
-    ck_kwargs = {'env': env}
+    ck_kwargs = {
+        'env': env,
+        'stderr': subprocess.PIPE,
+    }
     # try:
     #     i = sys.stderr.fileno()
     #     ck_kwargs['stderr'] = subprocess.STDOUT
