@@ -21,7 +21,6 @@ from django.utils import six
 
 import logging
 import subprocess
-from subprocess import check_output
 
 
 def _options_to_args(**options):
@@ -111,19 +110,28 @@ def wkhtmltopdf(pages, output=None, **kwargs):
     ck_kwargs = {
         'env': env,
     }
-    if sys.version_info >= (3,5):
-        ck_kwargs['stderr'] = subprocess.PIPE
-    else:
-        ck_kwargs['stderr'] = subprocess.STDOUT
-    # try:
-    #     i = sys.stderr.fileno()
-    #     ck_kwargs['stderr'] = subprocess.STDOUT
-    # except AttributeError:
-    #     # can't call fileno() on mod_wsgi stderr object
-    #     pass
+    ck_kwargs['stdout'] = subprocess.PIPE
+    ck_kwargs['stderr'] = subprocess.PIPE
 
     logging.debug("CMDLINE: %s %s", str(ck_args), ck_kwargs)
-    return check_output(ck_args, **ck_kwargs)
+    timeout = None
+    with subprocess.Popen(ck_args, **ck_kwargs) as process:
+        try:
+            stdout, stderr = process.communicate(None, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            stdout, stderr = process.communicate()
+            raise subprocess.TimeoutExpired(process.args, timeout, output=stdout,
+                                 stderr=stderr)
+        except:
+            process.kill()
+            process.wait()
+            raise
+        retcode = process.poll()
+        if retcode:
+            raise subprocess.CalledProcessError(retcode, process.args,
+                                     output=stdout, stderr=stderr)
+    return stdout
 
 
 def content_disposition_filename(filename):
